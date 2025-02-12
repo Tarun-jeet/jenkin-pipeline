@@ -1,0 +1,77 @@
+pipeline {
+    agent any
+
+    environment {
+        //The Netlify credentials are from Jenkins Credentials Manager.
+        NETLIFY_TOKEN = credentials('NETLIFY_TOKEN')
+        SITE_ID       = credentials('SITE_ID')
+        // node option set for Openssl support
+        NODE_OPTIONS = '--openssl-legacy-provider'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                //clonning the gitHub repo
+                git url: 'https://github.com/Tarun-jeet/jenkin-pipeline.git', branch: 'main'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Installing dependencies and building the project...'
+                // Install dependencies.
+                sh 'npm install'
+                // Building the project (for a Create React App, this produces a build folder).
+                sh 'npm run build'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Running unit tests...'
+                // Run unit tests once and exit.
+                sh 'npm run test -- --watchAll=false'
+                
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                echo 'Running SonarQube analysis...'
+                // Injecting SonarQube environment variables from the SonarQube server configuration.
+                withSonarQubeEnv('Sonar-server') {
+                    script {
+                        // Retrieving the SonarScanner installation path from Jenkins Global Tools.
+                        def scannerHome = tool 'SonarScanner'
+                        // Prepend the SonarScanner's bin directory to PATH.
+                        env.PATH = "${scannerHome}/bin:${env.PATH}"
+                    }
+                    // Run sonar-scanner with the project key parameter.
+                    sh 'sonar-scanner -Dsonar.projectKey=Web-pipeline'
+                }
+            }
+        }
+ 
+        stage('Deploy on Netlify') {
+            steps {
+                echo 'Deploying to Netlify...'
+                // Deploying the built project (the contents of the build folder) to Netlify.
+                sh '''
+                   netlify deploy \
+                     --auth $NETLIFY_TOKEN \
+                     --site $SITE_ID \
+                     --dir=build \
+                     --prod
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Cleaning up the workspace after the pipeline completes.
+            cleanWs()
+        }
+    }
+}
