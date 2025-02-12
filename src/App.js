@@ -11,7 +11,7 @@ function App() {
 
   return (
     <>
-      <Label title="New Website" />
+      <Label title="New Website 1" />
       <Selector postType={postType} setPostType={setPostType} />
       <Label title="What do you want to ask or share" />
       <VerticalBox head="Title" row={1} column={100} place="Start your question with how, what, why etc." />
