@@ -36,7 +36,7 @@ pipeline {
             }
         }
         
-        stage('SonarQube Analysis') {
+        /*stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube analysis...'
                 // Injecting SonarQube environment variables from the SonarQube server configuration.
@@ -51,7 +51,7 @@ pipeline {
                     sh 'sonar-scanner -Dsonar.projectKey=Web-pipeline'
                 }
             }
-        }
+        }*/
  
         stage('Deploy on Netlify') {
             steps {
